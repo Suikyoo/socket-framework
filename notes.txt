@@ -1,0 +1,15 @@
+
+notes for select() based nonblocking socket system:
+
+I'm only thinking in the perspective of the server -_-
+
+for the three registers of [readables, writables, errs] as arguments for select.select(), 
+
+    I would opt for the sockets in readables to be permanent, (as long as the socket hasn't disconnected, it would be part of readables) since select's implementation in determining if a socket is ready to be read is if there's any incoming data to its network buffer (If I understood correctly) while 
+
+    For the sockets in writables, I would imagine it would just be the subset for the sockets in readables. It would be like recognizing that each socket in readables(the clients) except the server socket, have the potential to write data, but select's way of determining if a socket is writable is if there's available space in the network buffer for it. There may be cases where there's available space in the network buffer to write on but the socket in question just don't have anything to write for now. Thus, the sockets on readables would be appended to writables whenever these sockets want to send data. Once they send data, their entry in writables would be destroyed
+    
+    In most cases in the server-side, having one message buffer for each socket is enough, regardless whether it's for sending or receiving since sending in the case of the server, is a response to a request which means data must first be processed and then cleared from the message buffer before the response data is written on it. Actually it maybe it could still be the same for clients where they need to fully send the data first before moving on to the listening phase.
+
+    But in the case of a server, where a new request is incoming while it is still sending data based on a previous request, actually idk 
+
